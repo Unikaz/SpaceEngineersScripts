@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Sandbox.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame;
-using VRage.Profiler;
 
-namespace SpaceEngineer
+namespace SpaceEngineer.Display
 {
     public class Display : AScript
     {
@@ -78,7 +77,6 @@ namespace SpaceEngineer
 
         void Main(string argument, UpdateType updateSource)
         {
-            Echo("eeee");
             if (argument != null)
             {
                 // reload

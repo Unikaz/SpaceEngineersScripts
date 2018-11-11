@@ -55,7 +55,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AScript.cs" />
-    <Compile Include="Display.cs" />
+    <Compile Include="Display\Display.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Display\readme.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

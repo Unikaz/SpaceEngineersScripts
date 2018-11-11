@@ -3,6 +3,10 @@ using Sandbox.ModAPI.Ingame;
 
 namespace SpaceEngineer
 {
+    /**
+     * This class is here to get the standard objects taht the game will offer.
+     * Your classes should extends this one
+     */
     public abstract class AScript
     {
         public IMyGridTerminalSystem GridTerminalSystem;
