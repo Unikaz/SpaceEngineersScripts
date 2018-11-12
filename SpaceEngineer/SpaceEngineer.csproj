@@ -39,6 +39,12 @@
     <Reference Include="Sandbox.Game, Version=0.1.6871.28381, Culture=neutral, PublicKeyToken=null">
       <HintPath>D:\Program Files\Steam\SteamApps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
     </Reference>
+    <Reference Include="Sandbox.Game, Version=0.1.6883.25033, Culture=neutral, PublicKeyToken=null">
+      <HintPath>D:\Program Files\Steam\SteamApps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="SpaceEngineers.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>D:\Program Files\Steam\SteamApps\common\SpaceEngineers\Bin64\SpaceEngineers.Game.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>D:\Program Files\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Game.dll</HintPath>
@@ -54,7 +60,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AScript.cs" />
     <Compile Include="Display\Display.cs" />
     <Compile Include="Example.cs" />
   </ItemGroup>
