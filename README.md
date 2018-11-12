@@ -24,4 +24,6 @@ Enfin, cliquez sur "OK", et c'est bon !
 ## Développer son propre script
 
   Pour vous simplifier la vie, il y a une classe Example.cs que vous pouvez copier. Celle-ci fournit les bases pour vos scripts
-et fournit aussi quelque explications. 
+et fournit aussi quelque explications.  
+  Si vous comprenez l'anglais, je vous conseil aussi d'aller lire ce Github https://github.com/malware-dev/MDK-SE. Malware-dev est
+le créateur du compileur utilisé par Space Engineers pour ses scripts. Ce Github contient beaucoup d'informations intéressantes.
