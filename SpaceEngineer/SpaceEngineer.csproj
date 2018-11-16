@@ -63,6 +63,7 @@
     <Compile Include="Display\Class1.cs" />
     <Compile Include="Display\Display.cs" />
     <Compile Include="Example.cs" />
+    <Compile Include="Sorter\Sorter.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Display\readme.md" />

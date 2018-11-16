@@ -48,7 +48,7 @@ namespace SpaceEngineer.Display
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         public System.Text.RegularExpressions.Regex rgArgs =
-            new System.Text.RegularExpressions.Regex(@"(\w+)=((\w+)|""((\w*\s*)+)"")",
+            new System.Text.RegularExpressions.Regex(@"((\w+)=((\w+)|""((\w*\s*)+)""))|(\w+)",
                 System.Text.RegularExpressions.RegexOptions.Compiled |
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
@@ -230,18 +230,23 @@ namespace SpaceEngineer.Display
                         var cGroup = cMatch.Groups;
                         var cmd = cGroup[1].Value;
                         //parse args
-                        var aMatches = rgArgs.Matches(cGroup[3].Value);
+                        var aMatches = rgArgs.Matches(cGroup[2].Value);
                         var args = new Dictionary<string, string>();
                         foreach (System.Text.RegularExpressions.Match aMatch in aMatches)
                         {
-                            var k = aMatch.Groups[1].Value;
-                            var v = aMatch.Groups[3].Value;
+                            var k = aMatch.Groups[2].Value;
+                            var v = aMatch.Groups[4].Value;
                             if (v.Equals(""))
                             {
-                                v = aMatch.Groups[4].Value;
+                                v = aMatch.Groups[5].Value;
                             }
-                            Echo("k: " + k + " => " + v);
+                            if (v.Equals(""))
+                            {
+                                k = aMatch.Groups[7].Value;
+                                v = "True";
+                            }
                             args.Add(k, v);
+                            Echo("kv: " + k + "=>" + v);
                         }
                         // test commands
                         if (cmd.Equals("count"))
@@ -267,6 +272,7 @@ namespace SpaceEngineer.Display
                             if (args.TryGetValue("group", out group))
                             {
                                 GridTerminalSystem.GetBlockGroupWithName(group).GetBlocks(ent);
+                                ent = ent.OrderBy(e => e.CustomName).ToList();
                             }
                             else if (args.TryGetValue("name", out name))
                             {
@@ -278,8 +284,9 @@ namespace SpaceEngineer.Display
                                     " #$percent need argument 'group' or 'name'# ");
                                 continue;
                             }
-                            // get options [length, text, bar, full]
-                            var displayPercent = Args(args, "bar", false);
+                            // get options [length, text, bar, full, printName]
+                            bool printName = Args(args, "printname", false);
+                            var displayPercent = Args(args, "percent", false);
                             var displayBar = Args(args, "bar", true);
                             if (Args(args, "full", false))
                             {
@@ -288,52 +295,50 @@ namespace SpaceEngineer.Display
                             }
                             var length = Args(args, "length", 75);
 
+                            var content = "";
                             // apply
                             foreach (var c in ent)
                             {
-                                if (c != null)
+                                if (c == null) continue;
+                                if (c is IMyProductionBlock)
                                 {
-                                    if (c is IMyProductionBlock)
-                                    {
-                                        var p0 = PercentFilled(c);
-                                        var p1 = PercentFilled(c, 1);
-                                        var p0b = ProgressBar(p0, 100, displayPercent, length);
-                                        var p1b = ProgressBar(p1, 100, displayPercent, length);
+                                    var p0 = PercentFilled(c);
+                                    var p1 = PercentFilled(c, 1);
+                                    var p0b = ProgressBar(p0, 100, displayPercent, length);
+                                    var p1b = ProgressBar(p1, 100, displayPercent, length);
 
-                                        if (displayBar && displayPercent)
-                                        {
-                                            lines[j] = lines[j].Replace(cGroup[0].Value,
-                                                p0b + new string(' ', (75 + 5 - p0b.Length) * 2) + " => " + p1b);
-                                        }
-                                        else if (displayBar)
-                                        {
-                                            lines[j] = lines[j].Replace(cGroup[0].Value, p0b + " => " + p1b);
-                                        }
-                                        else
-                                        {
-                                            lines[j] = lines[j].Replace(cGroup[0].Value, p0 + " => " + p1);
-                                        }
+                                    if (displayBar && displayPercent)
+                                    {
+                                        content += (printName ? c.CustomName + '\n' : "") +
+                                                   p0b + new string(' ', (75 + 5 - p0b.Length) * 2) + " => " + p1b +
+                                                   "\n";
+                                    }
+                                    else if (displayBar)
+                                    {
+                                        content += (printName ? c.CustomName + '\n' : "") + p0b + " => " + p1b +
+                                                   "\n";
                                     }
                                     else
                                     {
-                                        var p0 = PercentFilled(c);
-                                        var p0b = ProgressBar(p0, 100, displayPercent, length);
+                                        content += (printName ? c.CustomName + '\n' : "") + p0 + " => " + p1 + "\n";
+                                    }
+                                }
+                                else
+                                {
+                                    var p0 = PercentFilled(c);
+                                    var p0b = ProgressBar(p0, 100, displayPercent, length);
 
-                                        if (displayBar && displayPercent)
-                                        {
-                                            lines[j] = lines[j].Replace(cGroup[0].Value, p0b);
-                                        }
-                                        else if (displayBar)
-                                        {
-                                            lines[j] = lines[j].Replace(cGroup[0].Value, p0b);
-                                        }
-                                        else
-                                        {
-                                            lines[j] = lines[j].Replace(cGroup[0].Value, p0 + "");
-                                        }
+                                    if (displayBar)
+                                    {
+                                        content += (printName ? c.CustomName + '\n' : "") + p0b + "\n";
+                                    }
+                                    else
+                                    {
+                                        content += (printName ? c.CustomName + '\n' : "") + p0 + "\n";
                                     }
                                 }
                             }
+                            lines[j] = lines[j].Replace(cGroup[0].Value, content.Substring(0, content.Length - 1));
                         }
                         else if (cmd.Equals("GlobalJumpDrive"))
                         {
@@ -491,10 +496,16 @@ namespace SpaceEngineer.Display
         {
             string sv;
             if (args.TryGetValue(key, out sv))
+            {
+                if (sv.ToLower().Equals("true"))
+                {
+                    return (TSource) Convert.ChangeType(true, typeof(TSource));
+                }
                 return (TSource) Convert.ChangeType(sv, typeof(TSource));
+            }
             return defaultValue;
         }
-        
+
         public string FormatNumber(float value)
         {
             return value.ToString("#,0.00", System.Globalization.CultureInfo.InvariantCulture);
