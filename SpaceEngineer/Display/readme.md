@@ -18,5 +18,5 @@ Les paramètres doivent être nommé. Par exemple **$count \<name="Uranium Ore">
 - **$count \<item> [ignoreIfEmpty]** : affiche la quantité d'un item/ressource, ignoreIfEmpty n'affiche pas la ligne si le résultat est 0. Le nom de l'item est très permissif. Par exemple, vous pouvez mettre "ingot" pour lister tout les lingots quelque soit la matière. 
 - **$progress \<group | name> [length, text | bar | full]** : affiche une progress bar du remplissage du groupe ou du bloc spécifié. Length permet de changer la taille de la bar, text n'affichera que le pourcentage, bar que la barre (par défaut) et full affichera les deux.
 - **$GlobalJumpDrive** : affiche le remplissage global des Jump Drives
-- **$ores [container]**: liste tous les minerais du vaisseau, ou d'un conteneur si spécifié
+- **$ores [group | container, ignoreIfEmpty]**: liste tous les minerais du vaisseau, ou d'un groupe ou conteneur si spécifié
   

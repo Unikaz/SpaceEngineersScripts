@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using VRageMath;
 using VRage.Game;
 using VRage.Collections;
@@ -23,12 +24,26 @@ namespace SpaceEngineer.Display
         //============================
         // Copy from here
         //============================
+        public List<string> Ores = new List<string>()
+        {
+            "Iron",
+            "Nickel",
+            "Cobalt",
+            "Magnesium",
+            "Silicon",
+            "Silver",
+            "Gold",
+            "Platinum",
+            "Uranium",
+            "Ice",
+            "Stone"
+        };
         public Dictionary<string, Group> Groups = new Dictionary<string, Group>();
 
         public List<Screen> Screens = new List<Screen>();
 
         public System.Text.RegularExpressions.Regex rgCmd =
-            new System.Text.RegularExpressions.Regex(@"\$(.+)\[(.+)\]",
+            new System.Text.RegularExpressions.Regex(@"\$([a-zA-Z]+)(\[(.+)\])?",
                 System.Text.RegularExpressions.RegexOptions.Compiled |
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
@@ -83,7 +98,7 @@ namespace SpaceEngineer.Display
 
         public Program()
         {
-            Runtime.UpdateFrequency = UpdateFrequency.Update1;
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;
             Reload();
         }
 
@@ -203,7 +218,6 @@ namespace SpaceEngineer.Display
                 var s = "";
                 Echo("LCD: " + lcd[i].TextPanel.CustomName);
                 if (lcd[i].CurrentPage.Content == null) continue;
-                Echo("ok");
                 var lines = lcd[i]?.CurrentPage.Content.Split('\n');
 
                 for (var j = 0; j < lines.Length; j++)
@@ -216,7 +230,7 @@ namespace SpaceEngineer.Display
                         var cGroup = cMatch.Groups;
                         var cmd = cGroup[1].Value;
                         //parse args
-                        var aMatches = rgArgs.Matches(cGroup[2].Value);
+                        var aMatches = rgArgs.Matches(cGroup[3].Value);
                         var args = new Dictionary<string, string>();
                         foreach (System.Text.RegularExpressions.Match aMatch in aMatches)
                         {
@@ -265,7 +279,6 @@ namespace SpaceEngineer.Display
                                 continue;
                             }
                             // get options [length, text, bar, full]
-
                             var displayPercent = Args(args, "bar", false);
                             var displayBar = Args(args, "bar", true);
                             if (Args(args, "full", false))
@@ -274,7 +287,6 @@ namespace SpaceEngineer.Display
                                 displayPercent = true;
                             }
                             var length = Args(args, "length", 75);
-                            Echo("length: " + length);
 
                             // apply
                             foreach (var c in ent)
@@ -283,10 +295,10 @@ namespace SpaceEngineer.Display
                                 {
                                     if (c is IMyProductionBlock)
                                     {
-                                        var p0 = percentFilled(c);
-                                        var p1 = percentFilled(c, 1);
-                                        var p0b = progressBar(p0, 100, displayPercent, length);
-                                        var p1b = progressBar(p1, 100, displayPercent, length);
+                                        var p0 = PercentFilled(c);
+                                        var p1 = PercentFilled(c, 1);
+                                        var p0b = ProgressBar(p0, 100, displayPercent, length);
+                                        var p1b = ProgressBar(p1, 100, displayPercent, length);
 
                                         if (displayBar && displayPercent)
                                         {
@@ -304,8 +316,8 @@ namespace SpaceEngineer.Display
                                     }
                                     else
                                     {
-                                        var p0 = percentFilled(c);
-                                        var p0b = progressBar(p0, 100, displayPercent, length);
+                                        var p0 = PercentFilled(c);
+                                        var p0b = ProgressBar(p0, 100, displayPercent, length);
 
                                         if (displayBar && displayPercent)
                                         {
@@ -320,41 +332,83 @@ namespace SpaceEngineer.Display
                                             lines[j] = lines[j].Replace(cGroup[0].Value, p0 + "");
                                         }
                                     }
-                                    s += progressBar(percentFilled(c), 100, displayPercent, length);
                                 }
                             }
-                            s += "\n";
                         }
-                        else if (cmd.Equals("$GlobalJumpDrive"))
+                        else if (cmd.Equals("GlobalJumpDrive"))
                         {
                             var jds = new List<IMyJumpDrive>();
                             GridTerminalSystem.GetBlocksOfType(jds, z => true);
                             int load = (int) jds.Sum(z => z.CurrentStoredPower);
                             int max = (int) jds.Sum(z => z.MaxStoredPower);
-                            s += progressBar(load, max, true) + "\n";
+                            lines[j] = lines[j].Replace(cGroup[0].Value, ProgressBar(load, max, true));
                         }
-                        if (cmd.Equals("pos"))
+                        else if (cmd.Equals("pos"))
                         {
                             var cockpits = new List<IMyCockpit>();
                             GridTerminalSystem.GetBlocksOfType(cockpits);
                             s += cockpits[0].CubeGrid.GetPosition() + "\n";
                         }
-                        if (cmd.Equals("$ores"))
+                        else if (cmd.Equals("ores"))
                         {
                             string containerName;
-                            var containers = new List<IMyCargoContainer>();
-                            if (args.TryGetValue("container", out containerName))
-                                containers.Add((IMyCargoContainer) GridTerminalSystem.GetBlockWithName(containerName));
+                            string groupName;
+                            var containers = new List<IMyTerminalBlock>();
+                            if (args.TryGetValue("group", out groupName))
+                            {
+                                var list = new List<IMyTerminalBlock>();
+                                GridTerminalSystem.GetBlockGroupWithName(groupName).GetBlocks(list);
+                                containers.AddList(list);
+                            }
+                            else if (args.TryGetValue("container", out containerName))
+                                containers.Add(GridTerminalSystem.GetBlockWithName(containerName));
                             else
                                 GridTerminalSystem.GetBlocksOfType(containers);
+
+                            var o = "";
+                            var ignoreIfEmpty = Args(args, "ignoreIfEmpty", false);
+                            foreach (var ore in Ores)
+                            {
+                                var v = CountItems(ore + " ore");
+                                if (!(ignoreIfEmpty && v == 0))
+                                    o += ore + ": " + FormatNumber(v / 1000f) + " K\n";
+                            }
+                            lines[j] = lines[j].Replace(cGroup[0].Value, o.Substring(0, o.Length - 1));
+                        }
+                        else if (cmd.Equals("ingots"))
+                        {
+                            string containerName;
+                            string groupName;
+                            var containers = new List<IMyTerminalBlock>();
+                            if (args.TryGetValue("group", out groupName))
+                            {
+                                var list = new List<IMyTerminalBlock>();
+                                GridTerminalSystem.GetBlockGroupWithName(groupName).GetBlocks(list);
+                                containers.AddList(list);
+                            }
+                            else if (args.TryGetValue("container", out containerName))
+                                containers.Add(GridTerminalSystem.GetBlockWithName(containerName));
+                            else
+                                GridTerminalSystem.GetBlocksOfType(containers);
+
+                            var o = "";
+                            var ignoreIfEmpty = Args(args, "ignoreIfEmpty", false);
+                            foreach (var ore in Ores)
+                            {
+                                if (ore == "Ice") continue;
+                                var v = CountItems(ore + " ingot");
+                                if (!(ignoreIfEmpty && v == 0))
+                                    o += ore + ": " + FormatNumber(v / 1000f) + " K\n";
+                            }
+                            lines[j] = lines[j].Replace(cGroup[0].Value, o.Substring(0, o.Length - 1));
                         }
                         else
                         {
                             //unknown command
                         }
                     }
-//                    if (!ignoreLine)
-                    s += lines[j] + "?";
+                    if (!ignoreLine)
+                        s += lines[j] + "\n";
                 }
                 lcd[i].TextPanel.WritePublicText(s);
             }
@@ -399,11 +453,11 @@ namespace SpaceEngineer.Display
             return false;
         }
 
-        string progressBar(float current, float max, bool detailed = false, int displaySize = 75)
+        public string ProgressBar(float current, float max, bool detailed = false, int displaySize = 75)
         {
-            float ratio = displaySize / max;
+            var ratio = displaySize / max;
             var fcurrent = current * ratio;
-            string s = "";
+            var s = "";
             for (var i = 0; i < displaySize; i++)
             {
                 if (i < fcurrent)
@@ -411,13 +465,12 @@ namespace SpaceEngineer.Display
                 else
                     s += "'";
             }
-            s += " ";
             if (detailed)
-                s += current / max * 100 + "%";
+                s += " " + current / max * 100;
             return s;
         }
 
-        int percentFilled(IMyEntity c, int invNum = 0)
+        int PercentFilled(IMyEntity c, int invNum = 0)
         {
             if (c is IMyJumpDrive)
             {
@@ -439,8 +492,14 @@ namespace SpaceEngineer.Display
             string sv;
             if (args.TryGetValue(key, out sv))
                 return (TSource) Convert.ChangeType(sv, typeof(TSource));
-            return default(TSource);
+            return defaultValue;
         }
+        
+        public string FormatNumber(float value)
+        {
+            return value.ToString("#,0.00", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
 
 #if DEBUG
     }
