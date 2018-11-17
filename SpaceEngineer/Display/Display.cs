@@ -286,6 +286,7 @@ namespace SpaceEngineer.Display
                             }
                             // get options [length, text, bar, full, printName]
                             bool printName = Args(args, "printname", false);
+                            bool grouped = Args(args, "grouped", false);
                             var displayPercent = Args(args, "percent", false);
                             var displayBar = Args(args, "bar", true);
                             if (Args(args, "full", false))
@@ -297,6 +298,28 @@ namespace SpaceEngineer.Display
 
                             var content = "";
                             // apply
+                            if (grouped)
+                            {
+                                var p0 = 0;
+                                var nb = 0;
+                                foreach (var c in ent)
+                                {
+                                    if (c == null) continue;
+                                    nb++;
+                                    p0 += PercentFilled(c);
+                                }
+                                p0 /= nb;
+                                if (displayBar)
+                                {
+                                    content += ProgressBar(p0, 100, displayPercent, length) + "\n";
+                                }
+                                else
+                                {
+                                    content += p0 + "\n";
+                                }
+                                lines[j] = lines[j].Replace(cGroup[0].Value, content.Substring(0, content.Length - 1));
+                                continue;
+                            }
                             foreach (var c in ent)
                             {
                                 if (c == null) continue;
@@ -419,7 +442,7 @@ namespace SpaceEngineer.Display
             }
         }
 
-        public float CountItems(string itemName, IMyEntity container = null)
+        public float CountItems(string itemName, IMyTerminalBlock container = null)
         {
             long sum = 0;
             itemName = itemName.Replace("5.56", "5p56"); //patchmaaaan !
@@ -427,11 +450,11 @@ namespace SpaceEngineer.Display
                 .SelectMany(p => p.Split(' '))
                 .Select(namePart => namePart.ToLower())
                 .ToList();
-            var containers = new List<IMyEntity>();
+            var containers = new List<IMyTerminalBlock>();
             if (container != null)
                 containers.Add(container);
             else
-                GridTerminalSystem.GetBlocksOfType(containers);
+                GridTerminalSystem.GetBlocksOfType<IMyTerminalBlock>(containers);
             for (var i = 0; i < containers.Count; i++)
             {
                 for (int j = 0; j < containers[i].InventoryCount; j++)
