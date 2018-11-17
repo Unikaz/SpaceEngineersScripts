@@ -38,11 +38,12 @@ namespace SpaceEngineer.Sorter
         public void Main(string args)
         {
             var infos = new Dictionary<IMyTerminalBlock, List<List<string>>>();
-            var containers = new List<IMyCargoContainer>();
+            var containers = new List<IMyTerminalBlock>();
             GridTerminalSystem.GetBlocksOfType(containers);
             // lister tous les CustomData
             for (var i = 0; i < containers.Count; i++)
             {
+                if (!containers[i].HasInventory) continue;
                 if (string.IsNullOrEmpty(containers[i].CustomData)) continue;
                 var list = new List<List<string>>();
                 infos.Add(containers[i], list);
@@ -58,9 +59,20 @@ namespace SpaceEngineer.Sorter
                 if (!infos.TryGetValue(source, out config))
                     config = new List<List<string>>();
 
-                for (int k = source.GetInventory(0).GetItems().Count - 1; k >= 0; k--)
+                IMyInventory inventorySource = null;
+
+                if(source.CustomData.Contains("disableSorter")) continue;
+                
+                if (source.InventoryCount == 2)
+                    inventorySource = source.GetInventory(1);
+                else if (source is IMyCargoContainer)
+                    inventorySource = source.GetInventory(0);
+                else continue;
+
+
+                for (var k = inventorySource.GetItems().Count - 1; k >= 0; k--)
                 {
-                    var item = source.GetInventory(0).GetItems()[k];
+                    var item = inventorySource.GetItems()[k];
                     if (config.Any(line =>
                         line.All(namePart => item.GetDefinitionId().ToString().ToLower().Contains(namePart))))
                     {
@@ -81,7 +93,7 @@ namespace SpaceEngineer.Sorter
                         // je transfert autant que possible
                         for (var j = 0; j < dests.Count && item.Amount.RawValue > 0; j++)
                         {
-                            source.GetInventory(0).TransferItemTo(dests[j].GetInventory(0), k, null, true, null);
+                            inventorySource.TransferItemTo(dests[j].GetInventory(0), k, null, true, null);
                         }
                     }
                 }
