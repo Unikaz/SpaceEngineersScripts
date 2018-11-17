@@ -32,7 +32,7 @@ namespace SpaceEngineer.Sorter
         //=======================================================================
         public Program()
         {
-            Runtime.UpdateFrequency = UpdateFrequency.Update10;
+            Runtime.UpdateFrequency = UpdateFrequency.Update100;
         }
 
         public void Main(string args)
