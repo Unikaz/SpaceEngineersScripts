@@ -15,6 +15,7 @@ using VRage.Game.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using Sandbox.Game.EntityComponents;
 using Sandbox.Game.Gui;
+using Sandbox.ModAPI.Weapons;
 using SpaceEngineers.Game.ModAPI.Ingame;
 using VRage.Compiler;
 using VRage.Game.ObjectBuilders.Definitions;
@@ -40,6 +41,7 @@ namespace SpaceEngineer.Sorter
             var infos = new Dictionary<IMyTerminalBlock, List<List<string>>>();
             var containers = new List<IMyTerminalBlock>();
             GridTerminalSystem.GetBlocksOfType(containers);
+            containers = containers.OrderBy(c => c.CustomName).ToList();
             // lister tous les CustomData
             for (var i = 0; i < containers.Count; i++)
             {
@@ -65,7 +67,7 @@ namespace SpaceEngineer.Sorter
                 
                 if (source.InventoryCount == 2)
                     inventorySource = source.GetInventory(1);
-                else if (source is IMyCargoContainer)
+                else if (source is IMyCargoContainer || source is IMyShipWelder || source is IMyShipGrinder)
                     inventorySource = source.GetInventory(0);
                 else continue;
 
